@@ -134,19 +134,25 @@ resource "aws_cloudfront_distribution" "this" {
       default_ttl = lookup(i.value, "default_ttl", null)
       max_ttl     = lookup(i.value, "max_ttl", null)
 
-      dynamic "forwarded_values" {
-        for_each = lookup(i.value, "use_forwarded_values", true) ? [true] : []
+#      dynamic "use_forwarded_values" {
+ #       for_each = try(i.value, "use_forwarded_values", true) ? [true] : []
+        # for_each = try(coalesce(var.cache_policy_id), null) == null && try(coalesce(var.origin_request_policy_id), null) == null ? [true] : []
+        dynamic "forwarded_values" {
+        for_each = i.value["use_forwarded_values"] ? [ lookup(i.value, "forwarded_values", null) ] : []
 
-        content {
-          query_string            = lookup(i.value, "query_string", false)
-          query_string_cache_keys = lookup(i.value, "query_string_cache_keys", [])
-          headers                 = lookup(i.value, "headers", ["*"])
+          content {
+            query_string            = lookup(forwarded_values.value, "query_string", false)
+            query_string_cache_keys = lookup(forwarded_values.value, "query_string_cache_keys", [])
+            headers                 = lookup(forwarded_values.value, "headers", [])
 
-          cookies {
-            forward           = lookup(i.value, "cookies_forward", "all")
-            whitelisted_names = lookup(i.value, "cookies_whitelisted_names", null)
+            cookies {
+              # forward           = try(forwarded_values.value["cookies_forward"],"all")
+              # forward           = try(forwarded_values.value, "cookies_forward", "none")
+              forward           = lookup(forwarded_values.value, "cookies_forward", "none")
+              whitelisted_names = lookup(forwarded_values.value, "cookies_whitelisted_names", null)
+            }
           }
-        }
+#        }
       }
 
       dynamic "lambda_function_association" {
