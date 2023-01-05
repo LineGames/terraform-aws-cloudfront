@@ -140,10 +140,10 @@ resource "aws_cloudfront_distribution" "this" {
         content {
           query_string            = lookup(i.value, "query_string", false)
           query_string_cache_keys = lookup(i.value, "query_string_cache_keys", [])
-          headers                 = lookup(i.value, "headers", [])
+          headers                 = lookup(i.value, "headers", ["*"])
 
           cookies {
-            forward           = lookup(i.value, "cookies_forward", "none")
+            forward           = lookup(i.value, "cookies_forward", "all")
             whitelisted_names = lookup(i.value, "cookies_whitelisted_names", null)
           }
         }
